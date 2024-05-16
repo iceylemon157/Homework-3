@@ -46,7 +46,6 @@ df = portfolio_data = data.pivot_table(
 )
 df_returns = df.pct_change().fillna(0)
 
-
 """
 Problem 1: 
 
@@ -66,7 +65,9 @@ class EqualWeightPortfolio:
         """
         TODO: Complete Task 1 Below
         """
-
+        # print(assets)
+        assets_count = len(assets)
+        self.portfolio_weights.loc[:, assets] = 1 / assets_count
         """
         TODO: Complete Task 1 Above
         """
@@ -117,7 +118,14 @@ class RiskParityPortfolio:
         """
         TODO: Complete Task 2 Below
         """
-
+        dic = {}
+        for i in range(self.lookback + 1, len(df)):
+            for asset in assets:
+                std = np.std(df_returns[asset][i - self.lookback : i])
+                dic[asset] = 1 / std
+            sum_std = sum(dic.values())
+            for asset in assets:
+                self.portfolio_weights[asset][i] = dic[asset] / sum_std
         """
         TODO: Complete Task 2 Above
         """
@@ -192,11 +200,13 @@ class MeanVariancePortfolio:
 
                 # Sample Code: Initialize Decision w and the Objective
                 # NOTE: You can modify the following code
-                w = model.addMVar(n, name="w", ub=1)
-                model.setObjective(w.sum(), gp.GRB.MAXIMIZE)
+
+                w = model.addMVar(n, name="w", lb=0, ub=1)
+                model.addConstr(w.sum() == 1)
+                model.setObjective(w @ mu - gamma / 2 * w @ Sigma @ w, gp.GRB.MAXIMIZE)
 
                 """
-                TODO: Complete Task 3 Below
+                TODO: Complete Task 3 Above
                 """
                 model.optimize()
 
